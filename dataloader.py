@@ -32,14 +32,18 @@ partition = {'train':data_train, 'val': data_val, 'test' : data_test}
 #perform preprocessing of data
 preprocessed = []
 for i in partition.keys():
-    #eng, deu = preprocess(partition[i]['translation'])
+    eng, deu = preprocess(partition[i]['translation'])
     preprocessed.append((eng, deu))
 
-#prepare dataset to be loaded by dataloader in batches
-dataset_train = MyDataset(preprocessed[0][0],preprocessed[0][1])
-dataset_val = MyDataset(preprocessed[1][0],preprocessed[1][1])
-dataset_test = MyDataset(preprocessed[2][0],preprocessed[2][1])
+#prepare dataset to be loaded by dataloader in batches (pack into dictionaries)
+datasets =  {'train': MyDataset(preprocessed[0][0],preprocessed[0][1]),
+             'val': MyDataset(preprocessed[1][0],preprocessed[1][1]),
+             'test': MyDataset(preprocessed[2][0],preprocessed[2][1])}
 
-#dataloader = DataLoader(dataset_val, batch_size= 8, shuffle = True)
+#prepare dataloader
+dataloader = {
+    'train': DataLoader(datasets['train'], batch_size= 8, shuffle = True),
+    'val': DataLoader(datasets['val'], batch_size= 8, shuffle = False),
+    'test': DataLoader(datasets['test'], batch_size= 8, shuffle = False)}
 
 
