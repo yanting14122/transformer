@@ -29,9 +29,9 @@ data_test = load_dataset('iwslt2017', 'iwslt2017-en-de', split = 'test')
 
 
 #prepare dataset to be loaded by dataloader in batches (pack into dictionaries)
-datasets =  {'train': MyDataset(preprocessed[0][0],preprocessed[0][1]),
-             'val': MyDataset(preprocessed[1][0],preprocessed[1][1]),
-             'test': MyDataset(preprocessed[2][0],preprocessed[2][1])}
+datasets =  {'train': MyDataset(preprocessed['train'][0],preprocessed['train'][1]),
+             'val': MyDataset(preprocessed['val'][0],preprocessed['val'][1]),
+             'test': MyDataset(preprocessed['test'][0],preprocessed['test'][1])}
 
 #prepare dataloader
 dataloader = {
