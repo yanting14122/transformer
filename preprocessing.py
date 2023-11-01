@@ -45,26 +45,14 @@ def tokenize(ls_of_sentences, bos_eos = False):
 
     return ls_of_sentences
 
-
+'''
 def max_len(ls_of_sentences):
-    '''return the maximum length of encoded sentence'''
+    ''''''return the maximum length of encoded sentence''''''
     max = 0
     for i in ls_of_sentences:
         if len(i) > max:
             max = len(i) #108
     return max
-
-
-def padding(ls_of_sentences, pad_id):
-    #padding using token '3' <pad> 
-
-    length = max_len(ls_of_sentences)
-    for i in ls_of_sentences:
-        num_pad = length - len(i)
-        ls_pad = np.repeat(3, num_pad)
-        i.extend(ls_pad)
-
-    return ls_of_sentences
     
     
 def split_en_de(ls_of_sentences):
@@ -77,28 +65,29 @@ def split_en_de(ls_of_sentences):
             de.append(ls_of_sentences[i])
     
     return en, de
-               
+'''               
 
 def preprocess(data):
     ls = dictionary_to_list(data)
     tokenized = tokenize(ls)
-    padded = padding(tokenized,3)
 
-    return en, de
+    return tokenized
 
+#load datasets(train, validation, test)
+data_train = load_dataset('iwslt2017', 'iwslt2017-en-de', split = 'train')
+data_val = load_dataset('iwslt2017', 'iwslt2017-en-de', split = 'validation')
+data_test = load_dataset('iwslt2017', 'iwslt2017-en-de', split = 'test')
 
 partition = {'train':data_train, 'val': data_val, 'test' : data_test}
 
 #perform preprocessing of data
-preprocessed = {}
-eng = preprocess(partition['train']['translation'][0::2], bos_eos = False)
-deu = preprocess(partition['train']['translation'][1::2], bos_eos = True)
-preprocessed['train'] = (eng, deu)
-
-eng = preprocess(partition['val']['translation'][0::2], bos_eos = False)
-deu = preprocess(partition['val']['translation'][1::2], bos_eos = True)
-preprocessed['val'] = (eng, deu)
-
-eng = preprocess(partition['test']['translation'][0::2], bos_eos = False)
-deu = preprocess(partition['test']['translation'][1::2], bos_eos = True)
-preprocessed['test'] = (eng, deu)
+preprocessed = []
+for i in partition.keys():
+    eng = tokenize(dictionary_to_list(partition[i]['translation'][0::2]), bos_eos = False)
+    deu = tokenize(dictionary_to_list(partition[i]['translation'][1::2]), bos_eos = True)
+    preprocessed.append((eng, deu))
+    
+preprocessed_d = {}
+preprocessed_d['train'] = preprocessed[0]
+preprocessed_d['val'] = preprocessed[1]
+preprocessed_d['test'] = preprocessed[2]
