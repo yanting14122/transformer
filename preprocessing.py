@@ -1,8 +1,8 @@
 import pandas as pd
 import sentencepiece as spm
-import sentencepiece as spm
 import time
 import numpy as np
+from datasets import load_dataset
 
 
 
@@ -22,7 +22,42 @@ def dictionary_to_list(pairs_of_sent):
 
 
 def initialize_tokenizer():
-    spm.SentencePieceTrainer.train('--input=iwslt2017_en_de --model_prefix=m_bpe --vocab_size=5000 --model_type=bpe --pad_id=3, --normalization_rule_name=nfkc_cf')
+    templates= '--input={} \
+    --pad_id={} \
+    --bos_id={} \
+    --eos_id={} \
+    --unk_id={} \
+    --model_prefix={} \
+    --vocab_size={} \
+    --character_coverage={} \
+    --model_type={} \
+    --normalization_rule_name={}'
+
+
+    train_input_file = "iwslt2017_en_de"
+    pad_id=0  #<pad> token을 0으로 설정
+    vocab_size = 12000 # vocab 사이즈
+    prefix = 'm_spm' # 저장될 tokenizer 모델에 붙는 이름
+    bos_id=1 #<start> token을 1으로 설정
+    eos_id=2 #<end> token을 2으로 설정
+    unk_id=3 #<unknown> token을 3으로 설정
+    character_coverage = 1.0 # to reduce character set 
+    model_type ='bpe' # Choose from unigram (default), bpe, char, or word
+    normalization_rule_name = 'nfkc_cf'
+
+
+    cmd = templates.format(train_input_file,
+                pad_id,
+                bos_id,
+                eos_id,
+                unk_id,
+                prefix,
+                vocab_size,
+                character_coverage,
+                model_type,
+                normalization_rule_name)
+    
+    spm.SentencePieceTrainer.train(cmd)
     bpe = spm.SentencePieceProcessor()
 
     return bpe
@@ -31,7 +66,7 @@ def initialize_tokenizer():
 def tokenize(ls_of_sentences, bos_eos = False):
     #loading the processor
     bpe = initialize_tokenizer()
-    bpe.load('m_bpe.model')
+    bpe.load('m_spm.model')
 
     #enabling the <BOS> and <EOS> tokens as default index
     if bos_eos == True:
@@ -40,10 +75,11 @@ def tokenize(ls_of_sentences, bos_eos = False):
     assert bpe.decode_pieces(bpe.encode_as_pieces('Thank you so much!')) == 'Thank you so much!'.lower(), 'decoded sentence != original sentence'
 
     #tokenization
+    tokenized = []
     for i in range(len(ls_of_sentences)):
-        ls_of_sentences[i] = bpe.encode(ls_of_sentences[i])
+        tokenized.append(bpe.encode(ls_of_sentences[i]))
 
-    return ls_of_sentences
+    return tokenized
 
 '''
 def max_len(ls_of_sentences):
@@ -67,11 +103,6 @@ def split_en_de(ls_of_sentences):
     return en, de
 '''               
 
-def preprocess(data):
-    ls = dictionary_to_list(data)
-    tokenized = tokenize(ls)
-
-    return tokenized
 
 #load datasets(train, validation, test)
 data_train = load_dataset('iwslt2017', 'iwslt2017-en-de', split = 'train')
@@ -87,7 +118,6 @@ for i in partition.keys():
     deu = tokenize(dictionary_to_list(partition[i]['translation'][1::2]), bos_eos = True)
     preprocessed.append((eng, deu))
     
-preprocessed_d = {}
-preprocessed_d['train'] = preprocessed[0]
-preprocessed_d['val'] = preprocessed[1]
-preprocessed_d['test'] = preprocessed[2]
+preprocessed_d = {'train': preprocessed[0],
+                  'val': preprocessed[1],
+                  'test': preprocessed[2]}

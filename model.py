@@ -37,12 +37,13 @@ class PositionalEncoding(nn.Module):
 class FeedForward(nn.Module):
     def __init__(self, d_model, d_hidden):
         super(FeedForward, self).__init__()
-        self.fc1 = nn.Linear(d_model, d_hidden)
-        self.fc2 = nn.Linear(d_hidden, d_model)
+        self.layers = nn.Sequential(
+            nn.Linear(d_model, d_hidden),
+            nn.ReLU(),
+            nn.Linear(d_hidden, d_model))
     
     def forward(self, x):
-        out = F.relu(self.fc1(x))
-        out = self.fc2(out)
+        out = self.layers(x)
         return out
 
 
@@ -92,8 +93,14 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.feedforward = FeedForward(512, 2048)
 
-    def forward(self, Q, K, V):
-        x = self.self_attn(Q, K, V)
-        #x = self.norm1(x + )
+    def forward(self, x):
+        attn_out = self.self_attn(x, x, x)
+        attn_out = self.dropout(attn_out)
+        sublayer1_out = self.norm1(x + attn_out)
+        ff_out = self.feedforward(sublayer1_out)
+        ff_out = self.dropout(ff_out)
+        sublayer2_out = self.norm2(sublayer1_out + ff_out)
+    
+        return sublayer2_out
         
 
