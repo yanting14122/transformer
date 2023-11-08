@@ -25,8 +25,8 @@ class MyDataset():
 
 def pad_collate_fn(data):
     eng, deu = list(zip(*data))
-    eng = nn.utils.rnn.pad_sequence(eng, batch_first = True, padding_value = 3)
-    deu = nn.utils.rnn.pad_sequence(deu, batch_first = True, padding_value = 3)
+    eng = nn.utils.rnn.pad_sequence(eng, batch_first = True, padding_value = 0)
+    deu = nn.utils.rnn.pad_sequence(deu, batch_first = True, padding_value = 0)
     
     return [torch.tensor(eng), torch.tensor(deu)]
 
