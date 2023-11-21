@@ -122,7 +122,7 @@ class Decoder(nn.Module):
     def forward(self, x, enc_output, src_mask, tgt_mask):
         masked_attn_out = self.masked_attn(x, x, x, tgt_mask)
         x = self.norm1(x + self.dropout(masked_attn_out))
-        self_attn_out = self.self_attn(masked_attn_out, enc_output, enc_output, src_mask)
+        self_attn_out = self.self_attn(x, enc_output, enc_output, src_mask)
         x = self.norm2(x + self.dropout(self_attn_out))
         ff_out = self.feedforward(x)
         dec_out = self.norm3(x + self.dropout(ff_out))
