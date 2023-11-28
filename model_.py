@@ -128,3 +128,45 @@ class Decoder(nn.Module):
         dec_out = self.norm3(x + self.dropout(ff_out))
 
         return dec_out
+
+
+class Transformer(nn.Module):
+    def __init__(self, vocab_size, d_model, num_heads, num_layers, max_seq_len, dropout = 0.1):
+        super(Transformer, self).__init__()
+        self.embedding = Embedding(vocab_size, d_model)
+        self.pos_encoding = PositionalEncoding(d_model, max_seq_len)
+        self.dropout = nn.Dropout(dropout)
+        
+        self.encoders = nn.ModuleList([Encoder(d_model, num_heads, dropout) for _ in range(num_layers)])
+        self.decoders = nn.ModuleList([Decoder(d_model, num_heads, dropout) for _ in range(num_layers)])
+
+        self.linear = nn.Linear(d_model, vocab_size)
+    
+    def generate_mask(self, src, tgt):
+        src_mask = (src != 0).unsqueeze(1).unsqueeze(2)
+        tgt_mask = (tgt != 0).unsqueeze(1).unsqueeze(3)
+        seq_len = tgt.size(1)
+
+        nopeak_mask = (1 - torch.triu(torch.ones(1, seq_len, seq_len), diagonal = 1)).bool()
+        tgt_mask = tgt_mask & nopeak_mask
+        
+        return src_mask, tgt_mask
+
+    def forward(self, src, tgt):
+        src_mask, tgt_mask = self.generate_mask(src, tgt)
+
+        enc_out = self.embedding(src)
+        enc_out = self.dropout(self.pos_encoding(enc_out))
+        
+        for layer in self.encoders:
+            enc_out = layer(enc_out, src_mask)
+
+        dec_out = self.embedding(tgt)
+        dec_out = self.dropout(self.pos_encoding(dec_out))
+
+        for layer in self.encoders:
+            dec_out = layer(dec_out, enc_out, src_mask, tgt_mask)
+
+        output = self.linear(dec_out)
+
+        return output
